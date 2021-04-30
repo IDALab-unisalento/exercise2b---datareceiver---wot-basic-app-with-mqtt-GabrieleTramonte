@@ -1,11 +1,8 @@
 ﻿const express = require("express");
 const WebSocket = require('ws');
 const path = require('path');
-const mongodb = require('mongodb');
 
-const MongoClient = mongodb.MongoClient;
 const app = express();
-const uri = 'mongodb://localhost/';
 
 const wss = new WebSocket.Server({ port: 3001 });
 
@@ -32,31 +29,6 @@ app.post("/temperature", (req, res, next) => {
     var timestamp = req.body.timestamp;
     var sensor = req.body.sensor;
 
-    async function pushInDb() {
-
-        const client = new MongoClient(uri, {useUnifiedTopology: true});
-        try {
-
-            await client.connect();
-
-            const database = client.db("TemperatureDB");
-            const temperatureColl = database.collection("temperature");
-            // create a document to be inserted
-            const doc = {
-                value: temperature,
-                timestamp: timestamp,
-                sensorId: sensor,
-                roomId: 'room1'
-            };
-
-            const result = await temperatureColl.insertOne(doc);
-            console.log(`${result.insertedCount} documents were inserted with the _id: ${result.insertedId}`,);
-        } finally {
-            await client.close();
-        }
-    }
-
-    pushInDb().catch(console.dir);
     async function pushToClient(){
         wss.clients.forEach(function each(client) {
             if (client.readyState === WebSocket.OPEN) {
